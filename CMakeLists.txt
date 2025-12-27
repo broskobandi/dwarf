@@ -32,22 +32,6 @@ if (UNIX AND NOT APPLE)
 	endif()
 	message("[STATUS] Using Ninja.")
 
-	# # Ensure std.cppm is available
-	# if (NOT STD_CPPM)
-	# 	message(FATAL_ERROR
-	# 		"[ERROR] Please provide path to std.cppm with: -DSTD_CPPM=/path/to/std.cppm"
-	# 	)
-	# endif()
-	# file(GLOB STD ${STD_CPPM})
-	# if (NOT STD)
-	# 	message(FATAL_ERROR
-	# 		"[ERROR] std.cppm not found."
-	# 	)
-	# endif()
-	# file(GLOB MOD ${MOD} ${STD})
-	# message("[STATUS] std.cppm found.")
-	# get_filename_component(STD_DIR ${STD_CPPM} DIRECTORY)
-
 endif()
 
 project(dwarf CXX C)
@@ -72,8 +56,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE sdl2-cppm)
 target_sources(
 	${PROJECT_NAME} PRIVATE
 	FILE_SET modules TYPE CXX_MODULES
-	# BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${STD_DIR}
-	BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
 	FILES ${MOD}
 )
 

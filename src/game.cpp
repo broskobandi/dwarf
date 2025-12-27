@@ -1,6 +1,9 @@
 module game;
 
+import canvas;
 import sdl2;
+
+import std;
 
 using sdl2::Sdl;
 using sdl2::Dimensions;
@@ -8,6 +11,8 @@ using sdl2::Window;
 using sdl2::Renderer;
 using sdl2::Event;
 using sdl2::KeyCode;
+using sdl2::Texture;
+using std::vector;
 
 void Game::run() {
 
@@ -19,6 +24,7 @@ void Game::run() {
 	auto event = sdl->event();
 	bool is_running = true;
 
+	vector<Texture> textures;
 
 	while (is_running) {
 		while (event.poll()) {
