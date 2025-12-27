@@ -19,6 +19,7 @@ void Game::run() {
 	auto event = sdl->event();
 	bool is_running = true;
 
+
 	while (is_running) {
 		while (event.poll()) {
 			if (
