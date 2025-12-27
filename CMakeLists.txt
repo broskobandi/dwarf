@@ -3,8 +3,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-file(GLOB MOD src/*.cppm)
-file(GLOB SRC src/*.cpp)
+file(GLOB MOD ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cppm)
+file(GLOB SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
 if (UNIX AND NOT APPLE)
 	message("[STATUS] Building on Linux.")
@@ -63,6 +63,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(sdl2-cppm)
 
 # Add exe
+message("SOURCES: ${SRC}")
 add_executable(${PROJECT_NAME} ${SRC})
 if (WIN32)
 	add_dependencies(${PROJECT_NAME} sdl2-cppm-static sdl2-cppm SDL2)
