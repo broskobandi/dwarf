@@ -64,7 +64,5 @@ FetchContent_MakeAvailable(sdl2-cppm)
 
 # Add exe
 add_executable(${PROJECT_NAME} ${SRC})
+add_dependencies(${PROJECT_NAME} sdl2-cppm-static sdl2-cppm)
 target_link_libraries(${PROJECT_NAME} PRIVATE sdl2-cppm)
-
-if (WIN32)
-endif()
