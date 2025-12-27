@@ -20,9 +20,10 @@ void Game::run() {
 	auto win =sdl->window(
 		"Dwarf", Dimensions{800, 600}, Window::Flags::SHOWN
 	);
-	auto ren = win->renderer(Renderer::Flags::PRESENTVSYNC);
 	auto event = sdl->event();
 	bool is_running = true;
+
+	Canvas canvas(win);
 
 	vector<Texture> textures;
 
@@ -38,8 +39,8 @@ void Game::run() {
 				is_running = false;
 			}
 		}
-		ren.clear({30, 70, 70, 255});
-		ren.present();
+		canvas.clear({30, 70, 70, 255});
+		canvas.present();
 	}
 
 }
