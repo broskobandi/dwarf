@@ -35,7 +35,7 @@ void Canvas::draw(const vector<RenderData>& rd) const {
 
 size_t Canvas::create_texture(const path& bmp) {
 
-	size_t index;
+	size_t index = 0;
 	for (const auto& p : loaded_bmps) {
 		if (p == bmp) {
 			return index;
