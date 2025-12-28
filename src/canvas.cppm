@@ -17,6 +17,7 @@ using std::optional;
 using std::variant;
 using std::nullopt;
 using std::shared_ptr;
+using std::uint8_t;
 
 export class Canvas {
 public:
@@ -27,6 +28,9 @@ public:
 		float angle {0.0f};
 		optional<Point> center;
 		Renderer::Flip flip {Renderer::Flip::NONE};
+		bool should_render {true};
+		uint8_t alpha_mod {255};
+		optional<Color> color_mod {nullopt};
 	};
 private:
 	Renderer ren;

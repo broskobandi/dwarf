@@ -19,7 +19,9 @@ using std::runtime_error;
 
 Canvas::Canvas(const shared_ptr<Window>& win) :
 	ren(win->renderer(Renderer::Flags::PRESENTVSYNC))
-{}
+{
+	ren.set_blend_mode(Renderer::BlendMode::BLEND);
+}
 
 void Canvas::clear(Color col) const {
 	ren.clear(col);
@@ -30,11 +32,16 @@ void Canvas::present() const {
 }
 
 void Canvas::draw(const RenderData& rd) const {
+	if (!rd.should_render) return;
 	if (holds_alternative<size_t>(rd.col_or_tex_id)) {
 		auto tex_id = std::get<size_t>(rd.col_or_tex_id);
 		if (tex_id >= textures.size()) {
 			throw runtime_error("Texture id is out of bounds.");
 		} else {
+			if (rd.color_mod.has_value()) {
+				ren.set_color_mode(textures.at(tex_id), rd.color_mod.value());
+			}
+			// ren.set
 			ren.copy(
 				textures.at(tex_id),
 				rd.dstrect,
@@ -44,6 +51,10 @@ void Canvas::draw(const RenderData& rd) const {
 				rd.flip
 			);
 		}
+	} else if (holds_alternative<Color>(rd.col_or_tex_id)) {
+		auto col = std::get<Color>(rd.col_or_tex_id);
+		ren.set_draw_color(col);
+		ren.fill_rect(rd.dstrect);
 	}
 }
 
