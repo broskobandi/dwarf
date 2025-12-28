@@ -8,55 +8,93 @@ using std::vector;
 using std::uint32_t;
 using std::int32_t;
 using std::size_t;
-using std::optional;
 using std::nullopt;
 
 using sdl2::Rect;
 using sdl2::Point;
-using sdl2::Event;
 
-Tiles::Tiles(
-	size_t normal_tex_id,
-	size_t shadow_tex_id,
-	uint32_t tile_size,
-	uint32_t hitbox_size,
-	uint32_t rows,
-	uint32_t cols,
-	int32_t y_offset,
-	uint32_t layers,
-	int32_t z_offset
-) :
-	normal_tex_id(normal_tex_id),
-	shadow_tex_id(shadow_tex_id),
-	hitbox_size(hitbox_size),
-	num_tiles_per_layer(rows * cols)
+Tiles::Tiles(Tiles::InitData id) :
+	num_tiles_per_layer(id.rows * id.cols),
+	tex_id(id.tex_id),
+	num_imgs(id.num_imgs),
+	dstrect_size(id.dstrect_size),
+	srcrect_size(id.srcrect_size),
+	hitbox_size(id.hitbox_size),
+	hitbox_position(id.hitbox_position),
+	rows(id.rows),
+	cols(id.cols),
+	layers(id.layers),
+	y_offset(id.y_offset),
+	z_offset(id.z_offset)
 {
 	num_tiles_per_layer = rows * cols;
 	size_t index = 0;
 	for (uint32_t z = 0; z < layers; z++) {
 		for (uint32_t y = 0; y < rows; y++) {
 			for (uint32_t x = 0; x < cols; x++) {
-				int32_t x_offset = y % 2 == 0 ? 0 : tile_size / 2;
+				int32_t x_offset = y % 2 == 0 ? 0 : dstrect_size.w / 2;
 				Rect dstrect {
-					static_cast<int32_t>(x * tile_size + x_offset),
+					static_cast<int32_t>(x * dstrect_size.w + x_offset),
 					static_cast<int32_t>(y * y_offset - z * z_offset),
-					tile_size,
-					tile_size
+					dstrect_size.w,
+					dstrect_size.h
 				};
-				Rect hitbox {
-					static_cast<int32_t>(dstrect.x + ((dstrect.w - hitbox_size) / 2)),
-					static_cast<int32_t>(dstrect.y + ((dstrect.h - hitbox_size) / 2)),
-					hitbox_size,
-					hitbox_size
-				};
-				bool is_exposed = false;
-				// if (
-				// 	z == layers - 1 || x == 0 || x == cols - 1 || y == 0 || y == rows - 1
-				// ) {
-				// 	is_exposed = true;
-				// }
-				tile_info.push_back({hitbox, is_exposed});
-				rd.push_back({normal_tex_id, dstrect});
+				Rect hitbox {0, 0, hitbox_size.w, hitbox_size.h};
+				switch (hitbox_position) {
+					case HitboxPosition::TOP_LEFT:
+						hitbox.x = dstrect.x;
+						hitbox.y = dstrect.y;
+						break;
+					case HitboxPosition::TOP_CENTER:
+						hitbox.x =
+							dstrect.x + ((dstrect_size.w - hitbox_size.w) / 2);
+						hitbox.y = dstrect.y;
+						break;
+					case HitboxPosition::TOP_RIGHT:
+						hitbox.x =
+							dstrect.x + (dstrect_size.w - hitbox_size.w);
+						hitbox.y = dstrect.y;
+						break;
+					case HitboxPosition::RIGHT_CENTER:
+						hitbox.x =
+							dstrect.x + (dstrect_size.w - hitbox_size.w);
+						hitbox.y =
+							dstrect.y + ((dstrect_size.h - hitbox_size.h) / 2);
+						break;
+					case HitboxPosition::BOTTOM_RIGHT:
+						hitbox.x =
+							dstrect.x + (dstrect_size.w - hitbox_size.w);
+						hitbox.y =
+							dstrect.y + (dstrect_size.h - hitbox_size.h);
+						break;
+					case HitboxPosition::BOTTOM_CENTER:
+						hitbox.x =
+							dstrect.x + ((dstrect_size.w - hitbox_size.w) / 2);
+						hitbox.y =
+							dstrect.y + (dstrect_size.h - hitbox_size.h);
+						break;
+					case HitboxPosition::BOTTOM_LEFT:
+						hitbox.x =
+							dstrect.x;
+						hitbox.y =
+							dstrect.y + (dstrect_size.h - hitbox_size.h);
+						break;
+					case HitboxPosition::LEFT_CENTER:
+						hitbox.x =
+							dstrect.x;
+						hitbox.y =
+							dstrect.y + ((dstrect_size.h - hitbox_size.h) / 2);
+						break;
+					case HitboxPosition::CENTER:
+						hitbox.x =
+							dstrect.x + ((dstrect_size.w - hitbox_size.w) / 2);
+						hitbox.y =
+							dstrect.y + ((dstrect_size.h - hitbox_size.h) / 2);
+						break;
+				}
+				Rect srcrect {0, 0, srcrect_size.w, srcrect_size.h};
+				tiles.push_back({hitbox});
+				rd.push_back({tex_id, dstrect, srcrect});
 				index++;
 			}
 		}
@@ -69,12 +107,11 @@ const vector<Canvas::RenderData>& Tiles::render_data() const {
 
 void Tiles::update(Point mouse_pos, bool left_click) {
 	size_t index = 0;
-	optional<Point> tile_underneath {nullopt};
-	for (auto& tile : tile_info) {
+	for (auto& tile : tiles) {
 		tile.is_exposed = false;
 		if (
 			index + num_tiles_per_layer >= rd.size() || 
-			!tile_info.at(index + num_tiles_per_layer).is_active
+			!tiles.at(index + num_tiles_per_layer).is_active
 		) {
 			tile.is_exposed = true;
 		}
@@ -100,7 +137,7 @@ void Tiles::update(Point mouse_pos, bool left_click) {
 
 vector<Canvas::RenderData> Tiles::hitboxes_render_data() const {
 	vector<Canvas::RenderData> rd;
-	for (const auto& tile : tile_info) {
+	for (const auto& tile : tiles) {
 		rd.push_back(Canvas::RenderData{
 			sdl2::Color{50, 50, 50, 128}, Rect(tile.hitbox)
 		});

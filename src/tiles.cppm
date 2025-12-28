@@ -9,37 +9,63 @@ using std::uint32_t;
 using std::int32_t;
 using std::size_t;
 
-using sdl2::Event;
 using sdl2::Rect;
 using sdl2::Point;
+using sdl2::Dimensions;
 
 export class Tiles {
+public:
+
+	enum class HitboxPosition {
+		TOP_LEFT,
+		TOP_CENTER,
+		TOP_RIGHT,
+		RIGHT_CENTER,
+		BOTTOM_RIGHT,
+		BOTTOM_CENTER,
+		BOTTOM_LEFT,
+		LEFT_CENTER,
+		CENTER
+	};
+
+	struct InitData {
+		size_t tex_id;
+		uint32_t num_imgs;
+		Dimensions dstrect_size;
+		Dimensions srcrect_size;
+		Dimensions hitbox_size;
+		HitboxPosition hitbox_position {HitboxPosition::CENTER};
+		uint32_t rows;
+		uint32_t cols;
+		uint32_t layers {1};
+		int32_t y_offset {0};
+		int32_t z_offset {0};
+	};
+
 private:
 
-	struct TileInfo {
+	struct Tile {
 		Rect hitbox;
 		bool is_exposed {false};
 		bool is_active {true};
 	};
 
 	vector<Canvas::RenderData> rd;
-	vector<TileInfo> tile_info;
-	size_t normal_tex_id;
-	size_t shadow_tex_id;
+	vector<Tile> tiles;
 	uint32_t num_tiles_per_layer;
-	uint32_t hitbox_size;
+	size_t tex_id;
+	uint32_t num_imgs;
+	Dimensions dstrect_size;
+	Dimensions srcrect_size;
+	Dimensions hitbox_size;
+	HitboxPosition hitbox_position {HitboxPosition::CENTER};
+	uint32_t rows;
+	uint32_t cols;
+	uint32_t layers {1};
+	int32_t y_offset {0};
+	int32_t z_offset {0};
 public:
-	Tiles(
-		size_t normal_tex_id,
-		size_t shadow_tex_id,
-		uint32_t tile_size,
-		uint32_t hitbox_size,
-		uint32_t rows,
-		uint32_t cols,
-		int32_t y_offset,
-		uint32_t layers = 1,
-		int32_t z_offset = 0
-	);
+	Tiles(InitData init_data);
 	const vector<Canvas::RenderData>& render_data() const;
 	void update(Point mouse_pos, bool left_click);
 	vector<Canvas::RenderData> hitboxes_render_data() const;
