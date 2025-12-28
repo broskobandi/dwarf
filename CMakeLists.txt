@@ -7,8 +7,6 @@ file(GLOB MOD ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cppm)
 file(GLOB SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
 if (UNIX AND NOT APPLE)
-	message("[STATUS] Building on Linux.")
-
 	# Use libc++
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 
@@ -22,7 +20,6 @@ if (UNIX AND NOT APPLE)
 			"[ERROR] Must use clang++ as the project uses c++23 modules."
 		)
 	endif()
-	message("[STATUS] Using ${COMPILER_NAME}")
 
 	# Ensure Ninja is being used
 	if (NOT CMAKE_GENERATOR STREQUAL Ninja)
@@ -30,7 +27,6 @@ if (UNIX AND NOT APPLE)
 			"[ERROR] Must use Ninja as the project uses c++23 modules."
 		)
 	endif()
-	message("[STATUS] Using Ninja.")
 
 endif()
 

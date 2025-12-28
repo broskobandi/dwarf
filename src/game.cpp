@@ -25,7 +25,7 @@ void Game::run() {
 
 	Canvas canvas(win);
 
-	vector<Texture> textures;
+	auto tex_id = canvas.create_texture("../assets/face.bmp");
 
 	while (is_running) {
 		while (event.poll()) {
@@ -40,6 +40,13 @@ void Game::run() {
 			}
 		}
 		canvas.clear({30, 70, 70, 255});
+
+		canvas.draw(
+			Canvas::RenderData{
+				tex_id
+			}
+		);
+
 		canvas.present();
 	}
 
