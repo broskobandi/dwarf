@@ -59,6 +59,16 @@ target_sources(
 	FILES ${MOD}
 )
 
+# Add compile options
+if (UNIX AND NOT APPLE)
+	if (CMAKE_BUILD_TYPE STREQUAL Debug)
+		target_compile_options(
+			${PROJECT_NAME} PRIVATE
+			-Wall -Wextra -Wunused-result -Wconversion
+		)
+	endif()
+endif()
+
 # Copy SDL library file to the target build dir
 if (WIN32)
 	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
