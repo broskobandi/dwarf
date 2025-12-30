@@ -49,9 +49,9 @@ private:
 		Rect dstrect;
 		Rect srcrect;
 		Rect hitbox;
-		bool is_exposed {false};
-		bool is_active {true};
-		uint8_t alpha_mod {255};
+		bool is_exposed;
+		bool is_active;
+		uint8_t alpha_mod;
 	};
 
 	vector<Tile> tiles;

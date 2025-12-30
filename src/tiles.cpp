@@ -90,7 +90,10 @@ Tiles::Tiles(Tiles::InitData id, const Renderer& ren, path bmp) :
 				tiles.push_back({
 					.dstrect = dstrect,
 					.srcrect = srcrect,
-					.hitbox = hitbox
+					.hitbox = hitbox,
+					.is_exposed = false,
+					.is_active = true,
+					.alpha_mod = 255
 				});
 				index++;
 			}
@@ -129,7 +132,6 @@ void Tiles::update(Point mouse_pos, bool left_click) {
 		}
 
 		index++;
-
 	}
 }
 
@@ -137,14 +139,15 @@ void Tiles::draw(const Renderer& ren) {
 	size_t index = 0;
 	for (auto& tile : tiles) {
 		// Render base rect
+		tile.srcrect.x = 0;
 		ren.set_alpha_mode(texture, tile.alpha_mod);
 		ren.copy(texture, tile.dstrect, tile.srcrect);
 
 		// Render shading
 		size_t cur_row = index / cols;
-		size_t stagger_adjustment = cur_row % 2 == 0 ? 0 : -1;
+		size_t stagger_adjustment = cur_row % 2 == 0 ? 0 : 1;
 		size_t index_of_shadow_casting_tile =
-			index + num_tiles_per_layer + stagger_adjustment;
+			index + num_tiles_per_layer - cols + stagger_adjustment;
 		if (
 			tile.is_exposed &&
 			tile.is_active &&

@@ -42,21 +42,7 @@ void Game::run() {
 		"../assets/ground4.bmp"
 	);
 
-	// Tiles tiles(Tiles::InitData{
-	// 	.tex_id = canvas.create_texture("../assets/ground4.bmp"),
-	// 	.num_imgs = 6,
-	// 	.dstrect_size = {128, 128},
-	// 	.srcrect_size = {32, 32},
-	// 	.hitbox_size = {64, 64},
-	// 	.hitbox_position = Tiles::HitboxPosition::TOP_CENTER,
-	// 	// .rows = WIN_H / (128 / 4),
-	// 	// .cols = WIN_W / 128,
-	// 	.rows = 4,
-	// 	.cols = 4,
-	// 	.layers = 3,
-	// 	.y_offset = 128 / 4,
-	// 	.z_offset = 128 / 2,
-	// });
+	ren.set_blend_mode(Renderer::BlendMode::BLEND);
 
 	while (is_running) {
 		bool left_click = false;
