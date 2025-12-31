@@ -35,6 +35,9 @@ void Game::run() {
 			.rows = WIN_H / (128 / 4),
 			.cols = WIN_W / 128,
 			.layers = 3,
+			// .rows = 2,
+			// .cols = 2,
+			// .layers = 2,
 			.y_offset = 128 / 4,
 			.z_offset = 128 / 2
 		},

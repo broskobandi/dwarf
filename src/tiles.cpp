@@ -145,42 +145,74 @@ void Tiles::draw(const Renderer& ren) {
 		ren.copy(texture, tile.dstrect, tile.srcrect);
 
 		// Render shadows
+
 		size_t cur_row = index / cols;
+
+		//// Top right
 		size_t stagger_adjustment = cur_row % 2 == 0 ? 0 : 1;
-		size_t index_of_shadow_casting_tile =
+		size_t index_of_top_right_tile =
 			index + num_tiles_per_layer - cols + stagger_adjustment;
 		if (
-			tile.is_exposed &&
 			tile.is_active &&
-			index_of_shadow_casting_tile < tiles.size() &&
-			tiles.at(index_of_shadow_casting_tile).is_active &&
-			tiles.at(index_of_shadow_casting_tile).dstrect.y == tile.dstrect.y - y_offset - z_offset
+			index_of_top_right_tile < tiles.size() &&
+			tiles.at(index_of_top_right_tile).is_active &&
+			tiles.at(index_of_top_right_tile).dstrect.y ==
+				tile.dstrect.y - y_offset - z_offset
 		) {
 			tile.srcrect.x = srcrect_size.w * 5;
 			ren.copy(texture, tile.dstrect, tile.srcrect);
 		}
 
-		// size_t index_of_tile_to_right = index + 1;
-		// if (
-		// 	tile.is_active &&
-		// 	index_of_tile_to_right < tiles.size() &&
-		// 	tiles.at(index_of_tile_to_right).is_active &&
-		// 	tiles.at(index_of_tile_to_right).dstrect.y == tile.dstrect.y
-		// ) {
-		// 	tile.srcrect.x = srcrect_size.w * 1;
-		// 	ren.copy(texture, tile.dstrect, tile.srcrect);
-		// }
-		//
-		// size_t index_of_tile_to_left = index - 1;
-		// if (
-		// 	tile.is_active &&
-		// 	(
-		// 		index_of_tile_to_left < 0
-		// 	)
-		// ) {
-		// 	tile.srcrect.x = srcrect_size.w * 4;
-		// 	ren.copy(texture, tile.dstrect, tile.srcrect);
-		// }
+		//// Right
+		size_t index_of_right_tile = index + 1;
+		if (
+			tile.is_active &&
+			index_of_right_tile < tiles.size() &&
+			tiles.at(index_of_right_tile).is_active &&
+			tiles.at(index_of_right_tile).dstrect.y == tile.dstrect.y
+		) {
+			tile.srcrect.x = srcrect_size.w * 1;
+			ren.copy(texture, tile.dstrect, tile.srcrect);
+		}
+
+		//// Center
+		size_t index_of_tile_to_right_one_row_below =
+			index + cols + stagger_adjustment;
+		if (
+			tile.is_active &&
+		    (
+				index_of_tile_to_right_one_row_below >= tiles.size() ||
+				(
+					tiles.at(index_of_tile_to_right_one_row_below).is_active &&
+					tiles.at(index_of_tile_to_right_one_row_below).dstrect.y !=
+						index + y_offset + z_offset
+				) ||
+				(
+					!tiles.at(index_of_tile_to_right_one_row_below).is_active &&
+					tiles.at(index_of_tile_to_right_one_row_below).dstrect.y ==
+						index + y_offset + z_offset
+				)
+			)
+	    ) {
+			tile.srcrect.x = srcrect_size.w * 3;
+			ren.copy(texture, tile.dstrect, tile.srcrect);
+		}
+
+		//// Left
+		stagger_adjustment = cur_row % 2 == 0 ? 1 : 0;
+		size_t index_of_tile_to_left = index - 1;
+		size_t index_of_tile_to_left_one_row_above =
+			index - cols - stagger_adjustment;
+		if (
+			tile.is_active &&
+			index_of_tile_to_left >= 0 &&
+			index_of_tile_to_left < tiles.size() &&
+			tiles.at(index_of_tile_to_left).is_active &&
+			tiles.at(index_of_tile_to_left).dstrect.y == tile.dstrect.y
+		) {
+			tile.srcrect.x = srcrect_size.w * 4;
+			ren.copy(texture, tile.dstrect, tile.srcrect);
+		}
 
 		index++;
 	}
