@@ -1,219 +1,202 @@
 module tiles;
-
-import std;
 import sdl2;
+import std;
 
-using std::uint32_t;
-using std::int32_t;
-using std::size_t;
-using std::nullopt;
-using std::filesystem::path;
-
-using sdl2::Rect;
+using sdl2::Renderer;
+using sdl2::Texture;
 using sdl2::Point;
 
-Tiles::Tiles(Tiles::InitData id, const Renderer& ren, path bmp) :
-	texture(ren.texture(bmp)),
-	num_tiles_per_layer(id.rows * id.cols),
-	dstrect_size(id.dstrect_size),
-	srcrect_size(id.srcrect_size),
-	rows(id.rows),
-	cols(id.cols),
-	y_offset(id.y_offset),
-	z_offset(id.z_offset)
+using std::size_t;
+using std::uint32_t;
+using std::int32_t;
+using std::uint8_t;
+using std::filesystem::path;
+
+Tiles::Tiles(const Renderer& ren, path path_to_bmp, TilesInitData&& init_data) :
+	TilesInitData(init_data), tex(ren.texture(path_to_bmp))
 {
-	num_tiles_per_layer = rows * cols;
-	size_t index = 0;
-	for (uint32_t z = 0; z < id.layers; z++) {
-		for (uint32_t y = 0; y < rows; y++) {
-			for (uint32_t x = 0; x < cols; x++) {
-				int32_t x_offset = y % 2 == 0 ? 0 : dstrect_size.w / 2;
-				Rect dstrect {
-					static_cast<int32_t>(x * dstrect_size.w + x_offset),
-					static_cast<int32_t>(y * id.y_offset - z * id.z_offset),
-					dstrect_size.w,
-					dstrect_size.h
-				};
-				Rect hitbox {0, 0, id.hitbox_size.w, id.hitbox_size.h};
-				switch (id.hitbox_position) {
-					case HitboxPosition::TOP_LEFT:
-						hitbox.x = dstrect.x;
-						hitbox.y = dstrect.y;
-						break;
+	for (uint32_t z = 0; z < num_layers; z++) {
+		for (uint32_t y = 0; y < num_rows; y++) {
+			int32_t x_offset = y % 2 == 0 ? 0 : dstrect_size / 2;
+			for (uint32_t x = 0; x < num_cols; x++) {
+				Tile tile {};
+
+				tile.dstrect.x = static_cast<int32_t>(x * dstrect_size) + x_offset;
+				tile.dstrect.y =
+					static_cast<int32_t>(y) * y_offset - z_offset *
+					static_cast<int32_t>(z);
+				tile.dstrect.w = dstrect_size;
+				tile.dstrect.h = dstrect_size;
+
+				tile.srcrect.x = 0;
+				tile.srcrect.y = 0;
+				tile.srcrect.w = srcrect_size;
+				tile.srcrect.h = srcrect_size;
+
+				tile.is_staggered = x_offset ? true : false;
+
+				tile.hitbox.w = hitbox_size;
+				tile.hitbox.h = hitbox_size;
+				switch(hitbox_position) {
 					case HitboxPosition::TOP_CENTER:
-						hitbox.x =
-							dstrect.x + ((dstrect_size.w - id.hitbox_size.w) / 2);
-						hitbox.y = dstrect.y;
+						tile.hitbox.x = tile.dstrect.x + 
+							static_cast<int32_t>(dstrect_size - hitbox_size) / 2;
+						tile.hitbox.y = tile.dstrect.y;
 						break;
 					case HitboxPosition::TOP_RIGHT:
-						hitbox.x =
-							dstrect.x + (dstrect_size.w - id.hitbox_size.w);
-						hitbox.y = dstrect.y;
+						tile.hitbox.x = tile.dstrect.x + 
+							static_cast<int32_t>(dstrect_size - hitbox_size);
+						tile.hitbox.y = tile.dstrect.y;
 						break;
 					case HitboxPosition::RIGHT_CENTER:
-						hitbox.x =
-							dstrect.x + (dstrect_size.w - id.hitbox_size.w);
-						hitbox.y =
-							dstrect.y + ((dstrect_size.h - id.hitbox_size.h) / 2);
+						tile.hitbox.x = tile.dstrect.x + 
+							static_cast<int32_t>(dstrect_size - hitbox_size);
+						tile.hitbox.y = tile.dstrect.y +
+							static_cast<int32_t>(dstrect_size - hitbox_size) / 2;
 						break;
 					case HitboxPosition::BOTTOM_RIGHT:
-						hitbox.x =
-							dstrect.x + (dstrect_size.w - id.hitbox_size.w);
-						hitbox.y =
-							dstrect.y + (dstrect_size.h - id.hitbox_size.h);
+						tile.hitbox.x = tile.dstrect.x + 
+							static_cast<int32_t>(dstrect_size - hitbox_size);
+						tile.hitbox.y = tile.dstrect.y +
+							static_cast<int32_t>(dstrect_size - hitbox_size);
 						break;
 					case HitboxPosition::BOTTOM_CENTER:
-						hitbox.x =
-							dstrect.x + ((dstrect_size.w - id.hitbox_size.w) / 2);
-						hitbox.y =
-							dstrect.y + (dstrect_size.h - id.hitbox_size.h);
+						tile.hitbox.x = tile.dstrect.x + 
+							static_cast<int32_t>(dstrect_size - hitbox_size) / 2;
+						tile.hitbox.y = tile.dstrect.y +
+							static_cast<int32_t>(dstrect_size - hitbox_size);
 						break;
 					case HitboxPosition::BOTTOM_LEFT:
-						hitbox.x =
-							dstrect.x;
-						hitbox.y =
-							dstrect.y + (dstrect_size.h - id.hitbox_size.h);
+						tile.hitbox.x = tile.dstrect.x;
+						tile.hitbox.y = tile.dstrect.y +
+							static_cast<int32_t>(dstrect_size - hitbox_size);
 						break;
 					case HitboxPosition::LEFT_CENTER:
-						hitbox.x =
-							dstrect.x;
-						hitbox.y =
-							dstrect.y + ((dstrect_size.h - id.hitbox_size.h) / 2);
+						tile.hitbox.x = tile.dstrect.x;
+						tile.hitbox.y = tile.dstrect.y +
+							static_cast<int32_t>(dstrect_size - hitbox_size) / 2;
+						break;
+					case HitboxPosition::TOP_LEFT:
+						tile.hitbox.x = tile.dstrect.x;
+						tile.hitbox.y = tile.dstrect.y;
 						break;
 					case HitboxPosition::CENTER:
-						hitbox.x =
-							dstrect.x + ((dstrect_size.w - id.hitbox_size.w) / 2);
-						hitbox.y =
-							dstrect.y + ((dstrect_size.h - id.hitbox_size.h) / 2);
+						tile.hitbox.x = tile.dstrect.x +
+							static_cast<int32_t>(dstrect_size - hitbox_size) / 2;
+						tile.hitbox.y = tile.dstrect.y +
+							static_cast<int32_t>(dstrect_size - hitbox_size) / 2;
 						break;
 				}
-				Rect srcrect {0, 0, srcrect_size.w, srcrect_size.h};
-				tiles.push_back({
-					.dstrect = dstrect,
-					.srcrect = srcrect,
-					.hitbox = hitbox,
-					.is_exposed = false,
-					.is_active = true,
-					.alpha_mod = 255
-				});
-				index++;
+				tiles.push_back(tile);
 			}
 		}
 	}
 }
 
 void Tiles::update(Point mouse_pos, bool left_click) {
-	size_t index = 0;
+	size_t i = 0;
+	size_t num_tiles_per_layer = num_cols * num_rows;
 	for (auto& tile : tiles) {
-		size_t index_of_tile_above = index + num_tiles_per_layer;
-		if (
-			tile.is_active &&
-			(
-				index_of_tile_above >= tiles.size() ||
-				!tiles.at(index_of_tile_above).is_active
-			)
-	    ) {
+		size_t tile_down_left_index =
+			i + num_cols -
+			(tile.is_staggered ? 0 : 1);
+		size_t tile_down_right_index =
+			i + num_cols +
+			(tile.is_staggered ? 1 : 0);
+		size_t tile_above_index =
+			i + num_tiles_per_layer;
+
+		// Update blocking bools
+
+		if (tile_down_left_index < tiles.size() &&
+			tiles.at(tile_down_left_index).is_active &&
+			tiles.at(tile_down_left_index).dstrect.y ==
+				tile.dstrect.y + y_offset
+		) {
+			tile.is_blocked_left = true;
+		} else {
+			tile.is_blocked_left = false;
+		}
+
+		if (tile_down_right_index < tiles.size() &&
+			tiles.at(tile_down_right_index).is_active &&
+			tiles.at(tile_down_right_index).dstrect.y ==
+				tile.dstrect.y + y_offset
+		) {
+			tile.is_blocked_right = true;
+		} else {
+			tile.is_blocked_right = false;
+		}
+
+		if (tile_above_index < tiles.size() &&
+			tiles.at(tile_above_index).is_active
+		) {
+			tile.is_blocked_above = true;
+		} else {
+			tile.is_blocked_above = false;
+		}
+
+		// Update visibility
+		
+		if (tile.is_blocked_above &&
+			tile.is_blocked_left &&
+			tile.is_blocked_right
+		) {
+			tile.is_visible = false;
+		} else {
+			tile.is_visible = true;
+		}
+
+		// Update exposure
+		
+		if (!tile.is_blocked_above) {
 			tile.is_exposed = true;
+		} else {
+			tile.is_exposed = false;
 		}
 
-		if (tile.is_active) {
-			tile.alpha_mod = 255;
-		}
-
-		if (
-			tile.is_exposed &&
-			tile.is_active &&
+		// Update highlight
+		
+		if (tile.is_exposed &&
 			mouse_pos.has_intersection(tile.hitbox)
 		) {
-			tile.alpha_mod = 128;
-			if (left_click) {
-				tile.is_active = false;
-				tile.alpha_mod = 0;
-			}
+			tile.is_highlighted = true;
+		} else {
+			tile.is_highlighted = false;
 		}
 
-		index++;
+		// Update activity
+		
+		if (tile.is_highlighted && left_click ) {
+			tile.is_active = false;
+		}
+
+		i++;
 	}
 }
 
-void Tiles::draw(const Renderer& ren) {
-	size_t index = 0;
-	for (auto& tile : tiles) {
-		// Render base rect
-		tile.srcrect.x = 0;
-		ren.set_alpha_mode(texture, tile.alpha_mod);
-		ren.copy(texture, tile.dstrect, tile.srcrect);
+void Tiles::draw(const Renderer& ren) const {
+	static uint8_t old_alpha {255};
+	static uint8_t new_alpha {255};
+	for (const auto& tile : tiles) {
 
-		// Render shadows
-
-		size_t cur_row = index / cols;
-
-		//// Top right
-		size_t stagger_adjustment = cur_row % 2 == 0 ? 0 : 1;
-		size_t index_of_top_right_tile =
-			index + num_tiles_per_layer - cols + stagger_adjustment;
-		if (
-			tile.is_active &&
-			index_of_top_right_tile < tiles.size() &&
-			tiles.at(index_of_top_right_tile).is_active &&
-			tiles.at(index_of_top_right_tile).dstrect.y ==
-				tile.dstrect.y - y_offset - z_offset
-		) {
-			tile.srcrect.x = srcrect_size.w * 5;
-			ren.copy(texture, tile.dstrect, tile.srcrect);
+		if (tile.is_highlighted) {
+			new_alpha = 128;
+		} else {
+			new_alpha = 255;
 		}
-
-		//// Right
-		size_t index_of_right_tile = index + 1;
-		if (
-			tile.is_active &&
-			index_of_right_tile < tiles.size() &&
-			tiles.at(index_of_right_tile).is_active &&
-			tiles.at(index_of_right_tile).dstrect.y == tile.dstrect.y
-		) {
-			tile.srcrect.x = srcrect_size.w * 1;
-			ren.copy(texture, tile.dstrect, tile.srcrect);
+		if (new_alpha != old_alpha) {
+			ren.set_alpha_mode(tex, new_alpha);
 		}
-
-		//// Center
-		size_t index_of_tile_to_right_one_row_below =
-			index + cols + stagger_adjustment;
-		if (
-			tile.is_active &&
-		    (
-				index_of_tile_to_right_one_row_below >= tiles.size() ||
-				(
-					tiles.at(index_of_tile_to_right_one_row_below).is_active &&
-					tiles.at(index_of_tile_to_right_one_row_below).dstrect.y !=
-						index + y_offset + z_offset
-				) ||
-				(
-					!tiles.at(index_of_tile_to_right_one_row_below).is_active &&
-					tiles.at(index_of_tile_to_right_one_row_below).dstrect.y ==
-						index + y_offset + z_offset
-				)
-			)
-	    ) {
-			tile.srcrect.x = srcrect_size.w * 3;
-			ren.copy(texture, tile.dstrect, tile.srcrect);
+		old_alpha = new_alpha;
+		if (tile.is_active && tile.is_visible) {
+			ren.copy(tex, tile.dstrect, tile.srcrect);
 		}
-
-		//// Left
-		stagger_adjustment = cur_row % 2 == 0 ? 1 : 0;
-		size_t index_of_tile_to_left = index - 1;
-		size_t index_of_tile_to_left_one_row_above =
-			index - cols - stagger_adjustment;
-		if (
-			tile.is_active &&
-			index_of_tile_to_left >= 0 &&
-			index_of_tile_to_left < tiles.size() &&
-			tiles.at(index_of_tile_to_left).is_active &&
-			tiles.at(index_of_tile_to_left).dstrect.y == tile.dstrect.y
-		) {
-			tile.srcrect.x = srcrect_size.w * 4;
-			ren.copy(texture, tile.dstrect, tile.srcrect);
-		}
-
-		index++;
 	}
+	// ren.set_draw_color({100, 100, 200, 100});
+	// for (const auto& tile : tiles) {
+	// 	if (tile.is_exposed) {
+	// 		ren.fill_rect(tile.hitbox);
+	// 	}
+	// }
 }
